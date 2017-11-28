@@ -217,7 +217,7 @@ func stateBeginValue(s *scanner, c byte) int {
 		s.step = stateBeginValueOrEmpty
 		s.pushParseState(parseArrayValue)
 		return scanBeginArray
-	case '"':
+	case '\'':
 		s.step = stateInString
 		return scanBeginLiteral
 	case '-':
@@ -226,13 +226,13 @@ func stateBeginValue(s *scanner, c byte) int {
 	case '0': // beginning of 0.123
 		s.step = state0
 		return scanBeginLiteral
-	case 't': // beginning of true
+	case 'T': // beginning of True
 		s.step = stateT
 		return scanBeginLiteral
-	case 'f': // beginning of false
+	case 'F': // beginning of False
 		s.step = stateF
 		return scanBeginLiteral
-	case 'n': // beginning of null
+	case 'N': // beginning of None
 		s.step = stateN
 		return scanBeginLiteral
 	}
@@ -261,7 +261,7 @@ func stateBeginString(s *scanner, c byte) int {
 	if c <= ' ' && isSpace(c) {
 		return scanSkipSpace
 	}
-	if c == '"' {
+	if c == '\'' {
 		s.step = stateInString
 		return scanBeginLiteral
 	}
@@ -329,7 +329,7 @@ func stateEndTop(s *scanner, c byte) int {
 
 // stateInString is the state after reading `"`.
 func stateInString(s *scanner, c byte) int {
-	if c == '"' {
+	if c == '\'' {
 		s.step = stateEndValue
 		return scanContinue
 	}
@@ -346,7 +346,7 @@ func stateInString(s *scanner, c byte) int {
 // stateInStringEsc is the state after reading `"\` during a quoted string.
 func stateInStringEsc(s *scanner, c byte) int {
 	switch c {
-	case 'b', 'f', 'n', 'r', 't', '\\', '/', '"':
+	case 'b', 'f', 'n', 'r', 't', '\\', '/', '\'':
 		s.step = stateInString
 		return scanContinue
 	case 'u':
@@ -485,94 +485,94 @@ func stateE0(s *scanner, c byte) int {
 	return stateEndValue(s, c)
 }
 
-// stateT is the state after reading `t`.
+// stateT is the state after reading `T`.
 func stateT(s *scanner, c byte) int {
 	if c == 'r' {
 		s.step = stateTr
 		return scanContinue
 	}
-	return s.error(c, "in literal true (expecting 'r')")
+	return s.error(c, "in literal True (expecting 'r')")
 }
 
-// stateTr is the state after reading `tr`.
+// stateTr is the state after reading `Tr`.
 func stateTr(s *scanner, c byte) int {
 	if c == 'u' {
 		s.step = stateTru
 		return scanContinue
 	}
-	return s.error(c, "in literal true (expecting 'u')")
+	return s.error(c, "in literal True (expecting 'u')")
 }
 
-// stateTru is the state after reading `tru`.
+// stateTru is the state after reading `Tru`.
 func stateTru(s *scanner, c byte) int {
 	if c == 'e' {
 		s.step = stateEndValue
 		return scanContinue
 	}
-	return s.error(c, "in literal true (expecting 'e')")
+	return s.error(c, "in literal True (expecting 'e')")
 }
 
-// stateF is the state after reading `f`.
+// stateF is the state after reading `F`.
 func stateF(s *scanner, c byte) int {
 	if c == 'a' {
 		s.step = stateFa
 		return scanContinue
 	}
-	return s.error(c, "in literal false (expecting 'a')")
+	return s.error(c, "in literal False (expecting 'a')")
 }
 
-// stateFa is the state after reading `fa`.
+// stateFa is the state after reading `Fa`.
 func stateFa(s *scanner, c byte) int {
 	if c == 'l' {
 		s.step = stateFal
 		return scanContinue
 	}
-	return s.error(c, "in literal false (expecting 'l')")
+	return s.error(c, "in literal False (expecting 'l')")
 }
 
-// stateFal is the state after reading `fal`.
+// stateFal is the state after reading `Fal`.
 func stateFal(s *scanner, c byte) int {
 	if c == 's' {
 		s.step = stateFals
 		return scanContinue
 	}
-	return s.error(c, "in literal false (expecting 's')")
+	return s.error(c, "in literal False (expecting 's')")
 }
 
-// stateFals is the state after reading `fals`.
+// stateFals is the state after reading `Fals`.
 func stateFals(s *scanner, c byte) int {
 	if c == 'e' {
 		s.step = stateEndValue
 		return scanContinue
 	}
-	return s.error(c, "in literal false (expecting 'e')")
+	return s.error(c, "in literal False (expecting 'e')")
 }
 
-// stateN is the state after reading `n`.
+// stateN is the state after reading `N`.
 func stateN(s *scanner, c byte) int {
-	if c == 'u' {
-		s.step = stateNu
+	if c == 'o' {
+		s.step = stateNo
 		return scanContinue
 	}
-	return s.error(c, "in literal null (expecting 'u')")
+	return s.error(c, "in literal None (expecting 'o')")
 }
 
-// stateNu is the state after reading `nu`.
-func stateNu(s *scanner, c byte) int {
-	if c == 'l' {
-		s.step = stateNul
+// stateNo is the state after reading `No`.
+func stateNo(s *scanner, c byte) int {
+	if c == 'n' {
+		s.step = stateNon
 		return scanContinue
 	}
-	return s.error(c, "in literal null (expecting 'l')")
+	return s.error(c, "in literal None (expecting 'n')")
 }
 
-// stateNul is the state after reading `nul`.
-func stateNul(s *scanner, c byte) int {
-	if c == 'l' {
+// stateNon is the state after reading `Non`.
+func stateNon(s *scanner, c byte) int {
+	if c == 'e' {
 		s.step = stateEndValue
 		return scanContinue
 	}
-	return s.error(c, "in literal null (expecting 'l')")
+	return s.error(c, "in literal None (expecting 'e')")
 }
 
 // stateError is the state after reaching a syntax error,

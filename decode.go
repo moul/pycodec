@@ -376,15 +376,15 @@ func (d *decodeState) value(v reflect.Value) {
 			d.scan.redo = false
 			d.scan.step = stateBeginValue
 		}
-		d.scan.step(&d.scan, '"')
-		d.scan.step(&d.scan, '"')
+		d.scan.step(&d.scan, '\'')
+		d.scan.step(&d.scan, '\'')
 
 		n := len(d.scan.parseState)
 		if n > 0 && d.scan.parseState[n-1] == parseObjectKey {
 			// d.scan thinks we just read an object key; finish the object
 			d.scan.step(&d.scan, ':')
-			d.scan.step(&d.scan, '"')
-			d.scan.step(&d.scan, '"')
+			d.scan.step(&d.scan, '\'')
+			d.scan.step(&d.scan, '\'')
 			d.scan.step(&d.scan, '}')
 		}
 
@@ -585,7 +585,7 @@ func (d *decodeState) array(v reflect.Value) {
 	}
 }
 
-var nullLiteral = []byte("null")
+var nullLiteral = []byte("None")
 var textUnmarshalerType = reflect.TypeOf(new(encoding.TextUnmarshaler)).Elem()
 
 // object consumes an object from d.data[d.off-1:], decoding into the value v.
@@ -836,7 +836,7 @@ func (d *decodeState) literalStore(item []byte, v reflect.Value, fromQuoted bool
 		return
 	}
 	if ut != nil {
-		if item[0] != '"' {
+		if item[0] != '\'' {
 			if fromQuoted {
 				d.saveError(fmt.Errorf("pycodec: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type()))
 			} else {
@@ -844,7 +844,7 @@ func (d *decodeState) literalStore(item []byte, v reflect.Value, fromQuoted bool
 				switch item[0] {
 				case 'n':
 					val = "null"
-				case 't', 'f':
+				case 'T', 'F':
 					val = "bool"
 				default:
 					val = "number"
@@ -871,10 +871,10 @@ func (d *decodeState) literalStore(item []byte, v reflect.Value, fromQuoted bool
 	v = pv
 
 	switch c := item[0]; c {
-	case 'n': // null
+	case 'N': // None
 		// The main parser checks that only true and false can reach here,
 		// but if this was a quoted string input, it could be anything.
-		if fromQuoted && string(item) != "null" {
+		if fromQuoted && string(item) != "None" {
 			d.saveError(fmt.Errorf("pycodec: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type()))
 			break
 		}
@@ -883,11 +883,11 @@ func (d *decodeState) literalStore(item []byte, v reflect.Value, fromQuoted bool
 			v.Set(reflect.Zero(v.Type()))
 			// otherwise, ignore null for primitives/string
 		}
-	case 't', 'f': // true, false
-		value := item[0] == 't'
+	case 'T', 'F': // True, False
+		value := item[0] == 'T'
 		// The main parser checks that only true and false can reach here,
 		// but if this was a quoted string input, it could be anything.
-		if fromQuoted && string(item) != "true" && string(item) != "false" {
+		if fromQuoted && string(item) != "True" && string(item) != "False" {
 			d.saveError(fmt.Errorf("pycodec: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type()))
 			break
 		}
@@ -908,7 +908,7 @@ func (d *decodeState) literalStore(item []byte, v reflect.Value, fromQuoted bool
 			}
 		}
 
-	case '"': // string
+	case '\'': // string
 		s, ok := unquoteBytes(item)
 		if !ok {
 			if fromQuoted {
@@ -1109,13 +1109,13 @@ func (d *decodeState) literalInterface() interface{} {
 	item := d.data[start:d.off]
 
 	switch c := item[0]; c {
-	case 'n': // null
+	case 'N': // None
 		return nil
 
-	case 't', 'f': // true, false
-		return c == 't'
+	case 'T', 'F': // True, False
+		return c == 'T'
 
-	case '"': // string
+	case '\'': // string
 		s, ok := unquote(item)
 		if !ok {
 			d.error(errPhase)
@@ -1156,7 +1156,7 @@ func unquote(s []byte) (t string, ok bool) {
 }
 
 func unquoteBytes(s []byte) (t []byte, ok bool) {
-	if len(s) < 2 || s[0] != '"' || s[len(s)-1] != '"' {
+	if len(s) < 2 || s[0] != '\'' || s[len(s)-1] != '\'' {
 		return
 	}
 	s = s[1 : len(s)-1]
@@ -1167,7 +1167,7 @@ func unquoteBytes(s []byte) (t []byte, ok bool) {
 	r := 0
 	for r < len(s) {
 		c := s[r]
-		if c == '\\' || c == '"' || c < ' ' {
+		if c == '\\' || c == '\'' || c < ' ' {
 			break
 		}
 		if c < utf8.RuneSelf {
@@ -1250,7 +1250,7 @@ func unquoteBytes(s []byte) (t []byte, ok bool) {
 			}
 
 		// Quote, control characters are invalid.
-		case c == '"', c < ' ':
+		case c == '\'', c < ' ':
 			return
 
 		// ASCII
