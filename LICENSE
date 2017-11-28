@@ -1,6 +1,7 @@
 BSD 3-Clause License
 
-The majority of this code was vastly derived from Go Authors.
+The majority of this code was vastly derived from Go Authors,
+https://github.com/golang/go/tree/master/src/encoding/json.
 
 Copyright (c) 2017, Manfred Touron
 All rights reserved.
