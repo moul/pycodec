@@ -1,3 +1,9 @@
+// The majority of this code was vastly derived from Go Authors
+// https://github.com/golang/go/tree/master/src/encoding/json.
+//
+// Copyright 2017 Manfred Touron. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
 package pycodec
 
 import (

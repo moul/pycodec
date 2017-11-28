@@ -1,13 +1,13 @@
-// Copyright 2010 The Go Authors. All rights reserved.
+// The majority of this code was vastly derived from Go Authors
+// https://github.com/golang/go/tree/master/src/encoding/json.
+//
+// Copyright 2017 Manfred Touron. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package pycodec implements encoding and decoding of PYCODEC as defined in
-// RFC 4627. The mapping between PYCODEC and Go values is described
+// Package pycodec implements encoding and decoding of PYCODEC.
+// The mapping between PYCODEC and Go values is described
 // in the documentation for the Marshal and Unmarshal functions.
-//
-// See "PYCODEC and Go" for an introduction to this package:
-// https://golang.org/doc/articles/pycodec_and_go.html
 package pycodec
 
 import (
