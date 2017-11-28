@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package json implements encoding and decoding of JSON as defined in
-// RFC 4627. The mapping between JSON and Go values is described
+// Package pycodec implements encoding and decoding of PYCODEC as defined in
+// RFC 4627. The mapping between PYCODEC and Go values is described
 // in the documentation for the Marshal and Unmarshal functions.
 //
-// See "JSON and Go" for an introduction to this package:
-// https://golang.org/doc/articles/json_and_go.html
-package json
+// See "PYCODEC and Go" for an introduction to this package:
+// https://golang.org/doc/articles/pycodec_and_go.html
+package pycodec
 
 import (
 	"bytes"
@@ -27,43 +27,43 @@ import (
 	"unicode/utf8"
 )
 
-// Marshal returns the JSON encoding of v.
+// Marshal returns the PYCODEC encoding of v.
 //
 // Marshal traverses the value v recursively.
 // If an encountered value implements the Marshaler interface
-// and is not a nil pointer, Marshal calls its MarshalJSON method
-// to produce JSON. If no MarshalJSON method is present but the
+// and is not a nil pointer, Marshal calls its MarshalPYCODEC method
+// to produce PYCODEC. If no MarshalPYCODEC method is present but the
 // value implements encoding.TextMarshaler instead, Marshal calls
-// its MarshalText method and encodes the result as a JSON string.
+// its MarshalText method and encodes the result as a PYCODEC string.
 // The nil pointer exception is not strictly necessary
 // but mimics a similar, necessary exception in the behavior of
-// UnmarshalJSON.
+// UnmarshalPYCODEC.
 //
 // Otherwise, Marshal uses the following type-dependent default encodings:
 //
-// Boolean values encode as JSON booleans.
+// Boolean values encode as PYCODEC booleans.
 //
-// Floating point, integer, and Number values encode as JSON numbers.
+// Floating point, integer, and Number values encode as PYCODEC numbers.
 //
-// String values encode as JSON strings coerced to valid UTF-8,
+// String values encode as PYCODEC strings coerced to valid UTF-8,
 // replacing invalid bytes with the Unicode replacement rune.
 // The angle brackets "<" and ">" are escaped to "\u003c" and "\u003e"
-// to keep some browsers from misinterpreting JSON output as HTML.
+// to keep some browsers from misinterpreting PYCODEC output as HTML.
 // Ampersand "&" is also escaped to "\u0026" for the same reason.
 // This escaping can be disabled using an Encoder that had SetEscapeHTML(false)
 // called on it.
 //
-// Array and slice values encode as JSON arrays, except that
+// Array and slice values encode as PYCODEC arrays, except that
 // []byte encodes as a base64-encoded string, and a nil slice
-// encodes as the null JSON value.
+// encodes as the null PYCODEC value.
 //
-// Struct values encode as JSON objects.
+// Struct values encode as PYCODEC objects.
 // Each exported struct field becomes a member of the object, using the
 // field name as the object key, unless the field is omitted for one of the
 // reasons given below.
 //
 // The encoding of each struct field can be customized by the format string
-// stored under the "json" key in the struct field's tag.
+// stored under the "pycodec" key in the struct field's tag.
 // The format string gives the name of the field, possibly followed by a
 // comma-separated list of options. The name may be empty in order to
 // specify options without overriding the default field name.
@@ -78,31 +78,31 @@ import (
 //
 // Examples of struct field tags and their meanings:
 //
-//   // Field appears in JSON as key "myName".
-//   Field int `json:"myName"`
+//   // Field appears in PYCODEC as key "myName".
+//   Field int `pycodec:"myName"`
 //
-//   // Field appears in JSON as key "myName" and
+//   // Field appears in PYCODEC as key "myName" and
 //   // the field is omitted from the object if its value is empty,
 //   // as defined above.
-//   Field int `json:"myName,omitempty"`
+//   Field int `pycodec:"myName,omitempty"`
 //
-//   // Field appears in JSON as key "Field" (the default), but
+//   // Field appears in PYCODEC as key "Field" (the default), but
 //   // the field is skipped if empty.
 //   // Note the leading comma.
-//   Field int `json:",omitempty"`
+//   Field int `pycodec:",omitempty"`
 //
 //   // Field is ignored by this package.
-//   Field int `json:"-"`
+//   Field int `pycodec:"-"`
 //
-//   // Field appears in JSON as key "-".
-//   Field int `json:"-,"`
+//   // Field appears in PYCODEC as key "-".
+//   Field int `pycodec:"-,"`
 //
-// The "string" option signals that a field is stored as JSON inside a
-// JSON-encoded string. It applies only to fields of string, floating point,
+// The "string" option signals that a field is stored as PYCODEC inside a
+// PYCODEC-encoded string. It applies only to fields of string, floating point,
 // integer, or boolean types. This extra level of encoding is sometimes used
 // when communicating with JavaScript programs:
 //
-//    Int64String int64 `json:",string"`
+//    Int64String int64 `pycodec:",string"`
 //
 // The key name will be used if it's a non-empty string consisting of
 // only Unicode letters, digits, and ASCII punctuation except quotation
@@ -111,18 +111,18 @@ import (
 // Anonymous struct fields are usually marshaled as if their inner exported fields
 // were fields in the outer struct, subject to the usual Go visibility rules amended
 // as described in the next paragraph.
-// An anonymous struct field with a name given in its JSON tag is treated as
+// An anonymous struct field with a name given in its PYCODEC tag is treated as
 // having that name, rather than being anonymous.
 // An anonymous struct field of interface type is treated the same as having
 // that type as its name, rather than being anonymous.
 //
-// The Go visibility rules for struct fields are amended for JSON when
+// The Go visibility rules for struct fields are amended for PYCODEC when
 // deciding which field to marshal or unmarshal. If there are
 // multiple fields at the same level, and that level is the least
 // nested (and would therefore be the nesting level selected by the
 // usual Go rules), the following extra rules apply:
 //
-// 1) Of those fields, if any are JSON-tagged, only tagged fields are considered,
+// 1) Of those fields, if any are PYCODEC-tagged, only tagged fields are considered,
 // even if there are multiple untagged fields that would otherwise conflict.
 //
 // 2) If there is exactly one field (tagged or not according to the first rule), that is selected.
@@ -132,27 +132,27 @@ import (
 // Handling of anonymous struct fields is new in Go 1.1.
 // Prior to Go 1.1, anonymous struct fields were ignored. To force ignoring of
 // an anonymous struct field in both current and earlier versions, give the field
-// a JSON tag of "-".
+// a PYCODEC tag of "-".
 //
-// Map values encode as JSON objects. The map's key type must either be a
+// Map values encode as PYCODEC objects. The map's key type must either be a
 // string, an integer type, or implement encoding.TextMarshaler. The map keys
-// are sorted and used as JSON object keys by applying the following rules,
+// are sorted and used as PYCODEC object keys by applying the following rules,
 // subject to the UTF-8 coercion described for string values above:
 //   - string keys are used directly
 //   - encoding.TextMarshalers are marshaled
 //   - integer keys are converted to strings
 //
 // Pointer values encode as the value pointed to.
-// A nil pointer encodes as the null JSON value.
+// A nil pointer encodes as the null PYCODEC value.
 //
 // Interface values encode as the value contained in the interface.
-// A nil interface value encodes as the null JSON value.
+// A nil interface value encodes as the null PYCODEC value.
 //
-// Channel, complex, and function values cannot be encoded in JSON.
+// Channel, complex, and function values cannot be encoded in PYCODEC.
 // Attempting to encode such a value causes Marshal to return
 // an UnsupportedTypeError.
 //
-// JSON cannot represent cyclic data structures and Marshal does not
+// PYCODEC cannot represent cyclic data structures and Marshal does not
 // handle them. Passing cyclic structures to Marshal will result in
 // an infinite recursion.
 //
@@ -179,11 +179,11 @@ func MarshalIndent(v interface{}, prefix, indent string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// HTMLEscape appends to dst the JSON-encoded src with <, >, &, U+2028 and U+2029
+// HTMLEscape appends to dst the PYCODEC-encoded src with <, >, &, U+2028 and U+2029
 // characters inside string literals changed to \u003c, \u003e, \u0026, \u2028, \u2029
-// so that the JSON will be safe to embed inside HTML <script> tags.
+// so that the PYCODEC will be safe to embed inside HTML <script> tags.
 // For historical reasons, web browsers don't honor standard HTML
-// escaping within <script> tags, so an alternative JSON encoding must
+// escaping within <script> tags, so an alternative PYCODEC encoding must
 // be used.
 func HTMLEscape(dst *bytes.Buffer, src []byte) {
 	// The characters can only appear in string literals,
@@ -215,9 +215,9 @@ func HTMLEscape(dst *bytes.Buffer, src []byte) {
 }
 
 // Marshaler is the interface implemented by types that
-// can marshal themselves into valid JSON.
+// can marshal themselves into valid PYCODEC.
 type Marshaler interface {
-	MarshalJSON() ([]byte, error)
+	MarshalPYCODEC() ([]byte, error)
 }
 
 // An UnsupportedTypeError is returned by Marshal when attempting
@@ -227,7 +227,7 @@ type UnsupportedTypeError struct {
 }
 
 func (e *UnsupportedTypeError) Error() string {
-	return "json: unsupported type: " + e.Type.String()
+	return "pycodec: unsupported type: " + e.Type.String()
 }
 
 type UnsupportedValueError struct {
@@ -236,7 +236,7 @@ type UnsupportedValueError struct {
 }
 
 func (e *UnsupportedValueError) Error() string {
-	return "json: unsupported value: " + e.Str
+	return "pycodec: unsupported value: " + e.Str
 }
 
 // Before Go 1.2, an InvalidUTF8Error was returned by Marshal when
@@ -250,7 +250,7 @@ type InvalidUTF8Error struct {
 }
 
 func (e *InvalidUTF8Error) Error() string {
-	return "json: invalid UTF-8 in string: " + strconv.Quote(e.S)
+	return "pycodec: invalid UTF-8 in string: " + strconv.Quote(e.S)
 }
 
 type MarshalerError struct {
@@ -259,12 +259,12 @@ type MarshalerError struct {
 }
 
 func (e *MarshalerError) Error() string {
-	return "json: error calling MarshalJSON for type " + e.Type.String() + ": " + e.Err.Error()
+	return "pycodec: error calling MarshalPYCODEC for type " + e.Type.String() + ": " + e.Err.Error()
 }
 
 var hex = "0123456789abcdef"
 
-// An encodeState encodes JSON into a bytes.Buffer.
+// An encodeState encodes PYCODEC into a bytes.Buffer.
 type encodeState struct {
 	bytes.Buffer // accumulated output
 	scratch      [64]byte
@@ -324,9 +324,9 @@ func (e *encodeState) reflectValue(v reflect.Value, opts encOpts) {
 }
 
 type encOpts struct {
-	// quoted causes primitive fields to be encoded inside JSON strings.
+	// quoted causes primitive fields to be encoded inside PYCODEC strings.
 	quoted bool
-	// escapeHTML causes '<', '>', and '&' to be escaped in JSON strings.
+	// escapeHTML causes '<', '>', and '&' to be escaped in PYCODEC strings.
 	escapeHTML bool
 }
 
@@ -448,9 +448,9 @@ func marshalerEncoder(e *encodeState, v reflect.Value, opts encOpts) {
 		e.WriteString("null")
 		return
 	}
-	b, err := m.MarshalJSON()
+	b, err := m.MarshalPYCODEC()
 	if err == nil {
-		// copy JSON into buffer, checking validity.
+		// copy PYCODEC into buffer, checking validity.
 		err = compact(&e.Buffer, b, opts.escapeHTML)
 	}
 	if err != nil {
@@ -465,9 +465,9 @@ func addrMarshalerEncoder(e *encodeState, v reflect.Value, _ encOpts) {
 		return
 	}
 	m := va.Interface().(Marshaler)
-	b, err := m.MarshalJSON()
+	b, err := m.MarshalPYCODEC()
 	if err == nil {
-		// copy JSON into buffer, checking validity.
+		// copy PYCODEC into buffer, checking validity.
 		err = compact(&e.Buffer, b, true)
 	}
 	if err != nil {
@@ -547,7 +547,7 @@ func (bits floatEncoder) encode(e *encodeState, v reflect.Value, opts encOpts) {
 	}
 
 	// Convert as if by ES6 number to string conversion.
-	// This matches most other JSON generators.
+	// This matches most other PYCODEC generators.
 	// See golang.org/issue/6384 and golang.org/issue/14135.
 	// Like fmt %g, but the exponent cutoffs are different
 	// and exponents themselves are not padded to two digits.
@@ -593,7 +593,7 @@ func stringEncoder(e *encodeState, v reflect.Value, opts encOpts) {
 			numStr = "0" // Number's zero-val
 		}
 		if !isValidNumber(numStr) {
-			e.error(fmt.Errorf("json: invalid number literal %q", numStr))
+			e.error(fmt.Errorf("pycodec: invalid number literal %q", numStr))
 		}
 		e.WriteString(numStr)
 		return
@@ -909,7 +909,7 @@ func (e *encodeState) string(s string, escapeHTML bool) int {
 				// This encodes bytes < 0x20 except for \t, \n and \r.
 				// If escapeHTML is set, it also escapes <, >, and &
 				// because they can lead to security holes when
-				// user-controlled strings are rendered into JSON
+				// user-controlled strings are rendered into PYCODEC
 				// and served to some browsers.
 				e.WriteString(`\u00`)
 				e.WriteByte(hex[b>>4])
@@ -931,11 +931,11 @@ func (e *encodeState) string(s string, escapeHTML bool) int {
 		}
 		// U+2028 is LINE SEPARATOR.
 		// U+2029 is PARAGRAPH SEPARATOR.
-		// They are both technically valid characters in JSON strings,
-		// but don't work in JSONP, which has to be evaluated as JavaScript,
-		// and can lead to security holes there. It is valid JSON to
+		// They are both technically valid characters in PYCODEC strings,
+		// but don't work in PYCODECP, which has to be evaluated as JavaScript,
+		// and can lead to security holes there. It is valid PYCODEC to
 		// escape them, so we do so unconditionally.
-		// See http://timelessrepo.com/json-isnt-a-javascript-subset for discussion.
+		// See http://timelessrepo.com/pycodec-isnt-a-javascript-subset for discussion.
 		if c == '\u2028' || c == '\u2029' {
 			if start < i {
 				e.WriteString(s[start:i])
@@ -986,7 +986,7 @@ func (e *encodeState) stringBytes(s []byte, escapeHTML bool) int {
 				// This encodes bytes < 0x20 except for \t, \n and \r.
 				// If escapeHTML is set, it also escapes <, >, and &
 				// because they can lead to security holes when
-				// user-controlled strings are rendered into JSON
+				// user-controlled strings are rendered into PYCODEC
 				// and served to some browsers.
 				e.WriteString(`\u00`)
 				e.WriteByte(hex[b>>4])
@@ -1008,11 +1008,11 @@ func (e *encodeState) stringBytes(s []byte, escapeHTML bool) int {
 		}
 		// U+2028 is LINE SEPARATOR.
 		// U+2029 is PARAGRAPH SEPARATOR.
-		// They are both technically valid characters in JSON strings,
-		// but don't work in JSONP, which has to be evaluated as JavaScript,
-		// and can lead to security holes there. It is valid JSON to
+		// They are both technically valid characters in PYCODEC strings,
+		// but don't work in PYCODECP, which has to be evaluated as JavaScript,
+		// and can lead to security holes there. It is valid PYCODEC to
 		// escape them, so we do so unconditionally.
-		// See http://timelessrepo.com/json-isnt-a-javascript-subset for discussion.
+		// See http://timelessrepo.com/pycodec-isnt-a-javascript-subset for discussion.
 		if c == '\u2028' || c == '\u2029' {
 			if start < i {
 				e.Write(s[start:i])
@@ -1070,7 +1070,7 @@ func (x byIndex) Less(i, j int) bool {
 	return len(x[i].index) < len(x[j].index)
 }
 
-// typeFields returns a list of fields that JSON should recognize for the given type.
+// typeFields returns a list of fields that PYCODEC should recognize for the given type.
 // The algorithm is breadth-first search over the set of structs to include - the top struct
 // and then any reachable anonymous structs.
 func typeFields(t reflect.Type) []field {
@@ -1104,7 +1104,7 @@ func typeFields(t reflect.Type) []field {
 				if sf.PkgPath != "" && !sf.Anonymous { // unexported
 					continue
 				}
-				tag := sf.Tag.Get("json")
+				tag := sf.Tag.Get("pycodec")
 				if tag == "-" {
 					continue
 				}
@@ -1171,7 +1171,7 @@ func typeFields(t reflect.Type) []field {
 	sort.Slice(fields, func(i, j int) bool {
 		x := fields
 		// sort field by name, breaking ties with depth, then
-		// breaking ties with "name came from json tag", then
+		// breaking ties with "name came from pycodec tag", then
 		// breaking ties with index sequence.
 		if x[i].name != x[j].name {
 			return x[i].name < x[j].name
@@ -1186,7 +1186,7 @@ func typeFields(t reflect.Type) []field {
 	})
 
 	// Delete all fields that are hidden by the Go rules for embedded fields,
-	// except that fields with JSON tags are promoted.
+	// except that fields with PYCODEC tags are promoted.
 
 	// The fields are sorted in primary order of name, secondary order
 	// of field index length. Loop over names; for each name, delete
@@ -1222,7 +1222,7 @@ func typeFields(t reflect.Type) []field {
 // dominantField looks through the fields, all of which are known to
 // have the same name, to find the single field that dominates the
 // others using Go's embedding rules, modified by the presence of
-// JSON tags. If there are multiple top-level fields, the boolean
+// PYCODEC tags. If there are multiple top-level fields, the boolean
 // will be false: This condition is an error in Go and we skip all
 // the fields.
 func dominantField(fields []field) (field, bool) {

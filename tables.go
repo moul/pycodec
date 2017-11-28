@@ -2,12 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package json
+package pycodec
 
 import "unicode/utf8"
 
 // safeSet holds the value true if the ASCII character with the given array
-// position can be represented inside a JSON string without any further
+// position can be represented inside a PYCODEC string without any further
 // escaping.
 //
 // All values are true except for the ASCII control characters (0-31), the
@@ -112,7 +112,7 @@ var safeSet = [utf8.RuneSelf]bool{
 }
 
 // htmlSafeSet holds the value true if the ASCII character with the given
-// array position can be safely represented inside a JSON string, embedded
+// array position can be safely represented inside a PYCODEC string, embedded
 // inside of HTML <script> tags, without any additional escaping.
 //
 // All values are true except for the ASCII control characters (0-31), the

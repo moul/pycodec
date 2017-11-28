@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package json
+package pycodec
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 	"io"
 )
 
-// A Decoder reads and decodes JSON values from an input stream.
+// A Decoder reads and decodes PYCODEC values from an input stream.
 type Decoder struct {
 	r     io.Reader
 	buf   []byte
@@ -26,7 +26,7 @@ type Decoder struct {
 // NewDecoder returns a new decoder that reads from r.
 //
 // The decoder introduces its own buffering and may
-// read data from r beyond the JSON values requested.
+// read data from r beyond the PYCODEC values requested.
 func NewDecoder(r io.Reader) *Decoder {
 	return &Decoder{r: r}
 }
@@ -35,11 +35,11 @@ func NewDecoder(r io.Reader) *Decoder {
 // Number instead of as a float64.
 func (dec *Decoder) UseNumber() { dec.d.useNumber = true }
 
-// Decode reads the next JSON-encoded value from its
+// Decode reads the next PYCODEC-encoded value from its
 // input and stores it in the value pointed to by v.
 //
 // See the documentation for Unmarshal for details about
-// the conversion of JSON into a Go value.
+// the conversion of PYCODEC into a Go value.
 func (dec *Decoder) Decode(v interface{}) error {
 	if dec.err != nil {
 		return dec.err
@@ -62,7 +62,7 @@ func (dec *Decoder) Decode(v interface{}) error {
 	dec.scanp += n
 
 	// Don't save err from unmarshal into dec.err:
-	// the connection is still usable since we read a complete JSON
+	// the connection is still usable since we read a complete PYCODEC
 	// object from it before the error happened.
 	err = dec.d.unmarshal(v)
 
@@ -78,7 +78,7 @@ func (dec *Decoder) Buffered() io.Reader {
 	return bytes.NewReader(dec.buf[dec.scanp:])
 }
 
-// readValue reads a JSON value into dec.buf.
+// readValue reads a PYCODEC value into dec.buf.
 // It returns the length of the encoding.
 func (dec *Decoder) readValue() (int, error) {
 	dec.scan.reset()
@@ -164,7 +164,7 @@ func nonSpace(b []byte) bool {
 	return false
 }
 
-// An Encoder writes JSON values to an output stream.
+// An Encoder writes PYCODEC values to an output stream.
 type Encoder struct {
 	w          io.Writer
 	err        error
@@ -180,11 +180,11 @@ func NewEncoder(w io.Writer) *Encoder {
 	return &Encoder{w: w, escapeHTML: true}
 }
 
-// Encode writes the JSON encoding of v to the stream,
+// Encode writes the PYCODEC encoding of v to the stream,
 // followed by a newline character.
 //
 // See the documentation for Marshal for details about the
-// conversion of Go values to JSON.
+// conversion of Go values to PYCODEC.
 func (enc *Encoder) Encode(v interface{}) error {
 	if enc.err != nil {
 		return enc.err
@@ -231,9 +231,9 @@ func (enc *Encoder) SetIndent(prefix, indent string) {
 }
 
 // SetEscapeHTML specifies whether problematic HTML characters
-// should be escaped inside JSON quoted strings.
+// should be escaped inside PYCODEC quoted strings.
 // The default behavior is to escape &, <, and > to \u0026, \u003c, and \u003e
-// to avoid certain safety problems that can arise when embedding JSON in HTML.
+// to avoid certain safety problems that can arise when embedding PYCODEC in HTML.
 //
 // In non-HTML settings where the escaping interferes with the readability
 // of the output, SetEscapeHTML(false) disables this behavior.
@@ -241,23 +241,23 @@ func (enc *Encoder) SetEscapeHTML(on bool) {
 	enc.escapeHTML = on
 }
 
-// RawMessage is a raw encoded JSON value.
+// RawMessage is a raw encoded PYCODEC value.
 // It implements Marshaler and Unmarshaler and can
-// be used to delay JSON decoding or precompute a JSON encoding.
+// be used to delay PYCODEC decoding or precompute a PYCODEC encoding.
 type RawMessage []byte
 
-// MarshalJSON returns m as the JSON encoding of m.
-func (m RawMessage) MarshalJSON() ([]byte, error) {
+// MarshalPYCODEC returns m as the PYCODEC encoding of m.
+func (m RawMessage) MarshalPYCODEC() ([]byte, error) {
 	if m == nil {
 		return []byte("null"), nil
 	}
 	return m, nil
 }
 
-// UnmarshalJSON sets *m to a copy of data.
-func (m *RawMessage) UnmarshalJSON(data []byte) error {
+// UnmarshalPYCODEC sets *m to a copy of data.
+func (m *RawMessage) UnmarshalPYCODEC(data []byte) error {
 	if m == nil {
-		return errors.New("json.RawMessage: UnmarshalJSON on nil pointer")
+		return errors.New("pycodec.RawMessage: UnmarshalPYCODEC on nil pointer")
 	}
 	*m = append((*m)[0:0], data...)
 	return nil
@@ -268,12 +268,12 @@ var _ Unmarshaler = (*RawMessage)(nil)
 
 // A Token holds a value of one of these types:
 //
-//	Delim, for the four JSON delimiters [ ] { }
-//	bool, for JSON booleans
-//	float64, for JSON numbers
-//	Number, for JSON numbers
-//	string, for JSON string literals
-//	nil, for JSON null
+//	Delim, for the four PYCODEC delimiters [ ] { }
+//	bool, for PYCODEC booleans
+//	float64, for PYCODEC numbers
+//	Number, for PYCODEC numbers
+//	string, for PYCODEC string literals
+//	nil, for PYCODEC null
 //
 type Token interface{}
 
@@ -336,21 +336,21 @@ func (dec *Decoder) tokenValueEnd() {
 	}
 }
 
-// A Delim is a JSON array or object delimiter, one of [ ] { or }.
+// A Delim is a PYCODEC array or object delimiter, one of [ ] { or }.
 type Delim rune
 
 func (d Delim) String() string {
 	return string(d)
 }
 
-// Token returns the next JSON token in the input stream.
+// Token returns the next PYCODEC token in the input stream.
 // At the end of the input stream, Token returns nil, io.EOF.
 //
 // Token guarantees that the delimiters [ ] { } it returns are
 // properly nested and matched: if Token encounters an unexpected
 // delimiter in the input, it will return an error.
 //
-// The input stream consists of basic JSON values—bool, string,
+// The input stream consists of basic PYCODEC values—bool, string,
 // number, and null—along with delimiters [ ] { } of type Delim
 // to mark the start and end of arrays and objects.
 // Commas and colons are elided.
@@ -504,14 +504,14 @@ func (dec *Decoder) peek() (byte, error) {
 /*
 TODO
 
-// EncodeToken writes the given JSON token to the stream.
+// EncodeToken writes the given PYCODEC token to the stream.
 // It returns an error if the delimiters [ ] { } are not properly used.
 //
 // EncodeToken does not call Flush, because usually it is part of
 // a larger operation such as Encode, and those will call Flush when finished.
 // Callers that create an Encoder and then invoke EncodeToken directly,
 // without using Encode, need to call Flush when finished to ensure that
-// the JSON is written to the underlying writer.
+// the PYCODEC is written to the underlying writer.
 func (e *Encoder) EncodeToken(t Token) error  {
 	...
 }

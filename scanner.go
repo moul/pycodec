@@ -2,9 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package json
+package pycodec
 
-// JSON value parser state machine.
+// PYCODEC value parser state machine.
 // Just about at the limit of what is reasonable to write by hand.
 // Some parts are a bit tedious, but overall it nicely factors out the
 // otherwise common code from the multiple scanning functions
@@ -15,7 +15,7 @@ package json
 
 import "strconv"
 
-// checkValid verifies that data is valid JSON-encoded data.
+// checkValid verifies that data is valid PYCODEC-encoded data.
 // scan is passed in for use by checkValid to avoid an allocation.
 func checkValid(data []byte, scan *scanner) error {
 	scan.reset()
@@ -31,7 +31,7 @@ func checkValid(data []byte, scan *scanner) error {
 	return nil
 }
 
-// nextValue splits data after the next whole JSON value,
+// nextValue splits data after the next whole PYCODEC value,
 // returning that value and the bytes that follow it as separate slices.
 // scan is passed in for use by nextValue to avoid an allocation.
 func nextValue(data []byte, scan *scanner) (value, rest []byte, err error) {
@@ -60,7 +60,7 @@ func nextValue(data []byte, scan *scanner) (value, rest []byte, err error) {
 	return data, nil, nil
 }
 
-// A SyntaxError is a description of a JSON syntax error.
+// A SyntaxError is a description of a PYCODEC syntax error.
 type SyntaxError struct {
 	msg    string // description of error
 	Offset int64  // error occurred after reading Offset bytes
@@ -68,7 +68,7 @@ type SyntaxError struct {
 
 func (e *SyntaxError) Error() string { return e.msg }
 
-// A scanner is a JSON scanning state machine.
+// A scanner is a PYCODEC scanning state machine.
 // Callers call scan.reset() and then pass bytes in one at a time
 // by calling scan.step(&scan, c) for each byte.
 // The return value, referred to as an opcode, tells the
@@ -76,7 +76,7 @@ func (e *SyntaxError) Error() string { return e.msg }
 // and ending literals, objects, and arrays, so that the
 // caller can follow along if it wishes.
 // The return value scanEnd indicates that a single top-level
-// JSON value has been completed, *before* the byte that
+// PYCODEC value has been completed, *before* the byte that
 // just got passed in.  (The indication must be delayed in order
 // to recognize the end of numbers: is 123 a whole value or
 // the beginning of 12345e+6?).
@@ -164,7 +164,7 @@ func (s *scanner) eof() int {
 		return scanEnd
 	}
 	if s.err == nil {
-		s.err = &SyntaxError{"unexpected end of JSON input", s.bytes}
+		s.err = &SyntaxError{"unexpected end of PYCODEC input", s.bytes}
 	}
 	return scanError
 }
@@ -607,7 +607,7 @@ func quoteChar(c byte) string {
 // This gives callers a simple 1-byte undo mechanism.
 func (s *scanner) undo(scanCode int) {
 	if s.redo {
-		panic("json: invalid use of scanner")
+		panic("pycodec: invalid use of scanner")
 	}
 	s.redoCode = scanCode
 	s.redoState = s.step

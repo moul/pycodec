@@ -2,11 +2,11 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package json
+package pycodec
 
 import "bytes"
 
-// Compact appends to dst the JSON-encoded src with
+// Compact appends to dst the PYCODEC-encoded src with
 // insignificant space characters elided.
 func Compact(dst *bytes.Buffer, src []byte) error {
 	return compact(dst, src, false)
@@ -65,12 +65,12 @@ func newline(dst *bytes.Buffer, prefix, indent string, depth int) {
 	}
 }
 
-// Indent appends to dst an indented form of the JSON-encoded src.
-// Each element in a JSON object or array begins on a new,
+// Indent appends to dst an indented form of the PYCODEC-encoded src.
+// Each element in a PYCODEC object or array begins on a new,
 // indented line beginning with prefix followed by one or more
 // copies of indent according to the indentation nesting.
 // The data appended to dst does not begin with the prefix nor
-// any indentation, to make it easier to embed inside other formatted JSON data.
+// any indentation, to make it easier to embed inside other formatted PYCODEC data.
 // Although leading space characters (space, tab, carriage return, newline)
 // at the beginning of src are dropped, trailing space characters
 // at the end of src are preserved and copied to dst.

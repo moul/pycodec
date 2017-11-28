@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Represents JSON data structure using native Go types: booleans, floats,
+// Represents PYCODEC data structure using native Go types: booleans, floats,
 // strings, arrays, and maps.
 
-package json
+package pycodec
 
 import (
 	"bytes"
@@ -21,68 +21,68 @@ import (
 	"unicode/utf8"
 )
 
-// Unmarshal parses the JSON-encoded data and stores the result
+// Unmarshal parses the PYCODEC-encoded data and stores the result
 // in the value pointed to by v.
 //
 // Unmarshal uses the inverse of the encodings that
 // Marshal uses, allocating maps, slices, and pointers as necessary,
 // with the following additional rules:
 //
-// To unmarshal JSON into a pointer, Unmarshal first handles the case of
-// the JSON being the JSON literal null. In that case, Unmarshal sets
-// the pointer to nil. Otherwise, Unmarshal unmarshals the JSON into
+// To unmarshal PYCODEC into a pointer, Unmarshal first handles the case of
+// the PYCODEC being the PYCODEC literal null. In that case, Unmarshal sets
+// the pointer to nil. Otherwise, Unmarshal unmarshals the PYCODEC into
 // the value pointed at by the pointer. If the pointer is nil, Unmarshal
 // allocates a new value for it to point to.
 //
-// To unmarshal JSON into a value implementing the Unmarshaler interface,
-// Unmarshal calls that value's UnmarshalJSON method, including
-// when the input is a JSON null.
+// To unmarshal PYCODEC into a value implementing the Unmarshaler interface,
+// Unmarshal calls that value's UnmarshalPYCODEC method, including
+// when the input is a PYCODEC null.
 // Otherwise, if the value implements encoding.TextUnmarshaler
-// and the input is a JSON quoted string, Unmarshal calls that value's
+// and the input is a PYCODEC quoted string, Unmarshal calls that value's
 // UnmarshalText method with the unquoted form of the string.
 //
-// To unmarshal JSON into a struct, Unmarshal matches incoming object
+// To unmarshal PYCODEC into a struct, Unmarshal matches incoming object
 // keys to the keys used by Marshal (either the struct field name or its tag),
 // preferring an exact match but also accepting a case-insensitive match.
 // Unmarshal will only set exported fields of the struct.
 //
-// To unmarshal JSON into an interface value,
+// To unmarshal PYCODEC into an interface value,
 // Unmarshal stores one of these in the interface value:
 //
-//	bool, for JSON booleans
-//	float64, for JSON numbers
-//	string, for JSON strings
-//	[]interface{}, for JSON arrays
-//	map[string]interface{}, for JSON objects
-//	nil for JSON null
+//	bool, for PYCODEC booleans
+//	float64, for PYCODEC numbers
+//	string, for PYCODEC strings
+//	[]interface{}, for PYCODEC arrays
+//	map[string]interface{}, for PYCODEC objects
+//	nil for PYCODEC null
 //
-// To unmarshal a JSON array into a slice, Unmarshal resets the slice length
+// To unmarshal a PYCODEC array into a slice, Unmarshal resets the slice length
 // to zero and then appends each element to the slice.
-// As a special case, to unmarshal an empty JSON array into a slice,
+// As a special case, to unmarshal an empty PYCODEC array into a slice,
 // Unmarshal replaces the slice with a new empty slice.
 //
-// To unmarshal a JSON array into a Go array, Unmarshal decodes
-// JSON array elements into corresponding Go array elements.
-// If the Go array is smaller than the JSON array,
-// the additional JSON array elements are discarded.
-// If the JSON array is smaller than the Go array,
+// To unmarshal a PYCODEC array into a Go array, Unmarshal decodes
+// PYCODEC array elements into corresponding Go array elements.
+// If the Go array is smaller than the PYCODEC array,
+// the additional PYCODEC array elements are discarded.
+// If the PYCODEC array is smaller than the Go array,
 // the additional Go array elements are set to zero values.
 //
-// To unmarshal a JSON object into a map, Unmarshal first establishes a map to
+// To unmarshal a PYCODEC object into a map, Unmarshal first establishes a map to
 // use. If the map is nil, Unmarshal allocates a new map. Otherwise Unmarshal
 // reuses the existing map, keeping existing entries. Unmarshal then stores
-// key-value pairs from the JSON object into the map. The map's key type must
+// key-value pairs from the PYCODEC object into the map. The map's key type must
 // either be a string, an integer, or implement encoding.TextUnmarshaler.
 //
-// If a JSON value is not appropriate for a given target type,
-// or if a JSON number overflows the target type, Unmarshal
+// If a PYCODEC value is not appropriate for a given target type,
+// or if a PYCODEC number overflows the target type, Unmarshal
 // skips that field and completes the unmarshaling as best it can.
 // If no more serious errors are encountered, Unmarshal returns
 // an UnmarshalTypeError describing the earliest such error.
 //
-// The JSON null value unmarshals into an interface, map, pointer, or slice
-// by setting that Go value to nil. Because null is often used in JSON to mean
-// ``not present,'' unmarshaling a JSON null into any other Go type has no effect
+// The PYCODEC null value unmarshals into an interface, map, pointer, or slice
+// by setting that Go value to nil. Because null is often used in PYCODEC to mean
+// ``not present,'' unmarshaling a PYCODEC null into any other Go type has no effect
 // on the value and produces no error.
 //
 // When unmarshaling quoted strings, invalid UTF-8 or
@@ -93,7 +93,7 @@ import (
 func Unmarshal(data []byte, v interface{}) error {
 	// Check for well-formedness.
 	// Avoids filling out half a data structure
-	// before discovering a JSON syntax error.
+	// before discovering a PYCODEC syntax error.
 	var d decodeState
 	err := checkValid(data, &d.scan)
 	if err != nil {
@@ -105,21 +105,21 @@ func Unmarshal(data []byte, v interface{}) error {
 }
 
 // Unmarshaler is the interface implemented by types
-// that can unmarshal a JSON description of themselves.
+// that can unmarshal a PYCODEC description of themselves.
 // The input can be assumed to be a valid encoding of
-// a JSON value. UnmarshalJSON must copy the JSON data
+// a PYCODEC value. UnmarshalPYCODEC must copy the PYCODEC data
 // if it wishes to retain the data after returning.
 //
 // By convention, to approximate the behavior of Unmarshal itself,
-// Unmarshalers implement UnmarshalJSON([]byte("null")) as a no-op.
+// Unmarshalers implement UnmarshalPYCODEC([]byte("null")) as a no-op.
 type Unmarshaler interface {
-	UnmarshalJSON([]byte) error
+	UnmarshalPYCODEC([]byte) error
 }
 
-// An UnmarshalTypeError describes a JSON value that was
+// An UnmarshalTypeError describes a PYCODEC value that was
 // not appropriate for a value of a specific Go type.
 type UnmarshalTypeError struct {
-	Value  string       // description of JSON value - "bool", "array", "number -5"
+	Value  string       // description of PYCODEC value - "bool", "array", "number -5"
 	Type   reflect.Type // type of Go value it could not be assigned to
 	Offset int64        // error occurred after reading Offset bytes
 	Struct string       // name of the struct type containing the field
@@ -128,12 +128,12 @@ type UnmarshalTypeError struct {
 
 func (e *UnmarshalTypeError) Error() string {
 	if e.Struct != "" || e.Field != "" {
-		return "json: cannot unmarshal " + e.Value + " into Go struct field " + e.Struct + "." + e.Field + " of type " + e.Type.String()
+		return "pycodec: cannot unmarshal " + e.Value + " into Go struct field " + e.Struct + "." + e.Field + " of type " + e.Type.String()
 	}
-	return "json: cannot unmarshal " + e.Value + " into Go value of type " + e.Type.String()
+	return "pycodec: cannot unmarshal " + e.Value + " into Go value of type " + e.Type.String()
 }
 
-// An UnmarshalFieldError describes a JSON object key that
+// An UnmarshalFieldError describes a PYCODEC object key that
 // led to an unexported (and therefore unwritable) struct field.
 // (No longer used; kept for compatibility.)
 type UnmarshalFieldError struct {
@@ -143,7 +143,7 @@ type UnmarshalFieldError struct {
 }
 
 func (e *UnmarshalFieldError) Error() string {
-	return "json: cannot unmarshal object key " + strconv.Quote(e.Key) + " into unexported field " + e.Field.Name + " of type " + e.Type.String()
+	return "pycodec: cannot unmarshal object key " + strconv.Quote(e.Key) + " into unexported field " + e.Field.Name + " of type " + e.Type.String()
 }
 
 // An InvalidUnmarshalError describes an invalid argument passed to Unmarshal.
@@ -154,13 +154,13 @@ type InvalidUnmarshalError struct {
 
 func (e *InvalidUnmarshalError) Error() string {
 	if e.Type == nil {
-		return "json: Unmarshal(nil)"
+		return "pycodec: Unmarshal(nil)"
 	}
 
 	if e.Type.Kind() != reflect.Ptr {
-		return "json: Unmarshal(non-pointer " + e.Type.String() + ")"
+		return "pycodec: Unmarshal(non-pointer " + e.Type.String() + ")"
 	}
-	return "json: Unmarshal(nil " + e.Type.String() + ")"
+	return "pycodec: Unmarshal(nil " + e.Type.String() + ")"
 }
 
 func (d *decodeState) unmarshal(v interface{}) (err error) {
@@ -185,7 +185,7 @@ func (d *decodeState) unmarshal(v interface{}) (err error) {
 	return d.savedError
 }
 
-// A Number represents a JSON number literal.
+// A Number represents a PYCODEC number literal.
 type Number string
 
 // String returns the literal text of the number.
@@ -201,11 +201,11 @@ func (n Number) Int64() (int64, error) {
 	return strconv.ParseInt(string(n), 10, 64)
 }
 
-// isValidNumber reports whether s is a valid JSON number literal.
+// isValidNumber reports whether s is a valid PYCODEC number literal.
 func isValidNumber(s string) bool {
-	// This function implements the JSON numbers grammar.
+	// This function implements the PYCODEC numbers grammar.
 	// See https://tools.ietf.org/html/rfc7159#section-6
-	// and http://json.org/number.gif
+	// and http://pycodec.org/number.gif
 
 	if s == "" {
 		return false
@@ -261,7 +261,7 @@ func isValidNumber(s string) bool {
 	return s == ""
 }
 
-// decodeState represents the state while decoding a JSON value.
+// decodeState represents the state while decoding a PYCODEC value.
 type decodeState struct {
 	data         []byte
 	off          int // read offset in data
@@ -276,9 +276,9 @@ type decodeState struct {
 }
 
 // errPhase is used for errors that should not happen unless
-// there is a bug in the JSON decoder or something is editing
+// there is a bug in the PYCODEC decoder or something is editing
 // the data slice while the decoder executes.
-var errPhase = errors.New("JSON decoder out of sync - data changing underfoot?")
+var errPhase = errors.New("PYCODEC decoder out of sync - data changing underfoot?")
 
 func (d *decodeState) init(data []byte) *decodeState {
 	d.data = data
@@ -315,7 +315,7 @@ func (d *decodeState) addErrorContext(err error) error {
 	return err
 }
 
-// next cuts off and returns the next full JSON value in d.data[d.off:].
+// next cuts off and returns the next full PYCODEC value in d.data[d.off:].
 // The next value is known to be an object or array, not a literal.
 func (d *decodeState) next() []byte {
 	c := d.data[d.off]
@@ -358,7 +358,7 @@ func (d *decodeState) scanWhile(op int) int {
 	return newOp
 }
 
-// value decodes a JSON value from d.data[d.off:] into the value.
+// value decodes a PYCODEC value from d.data[d.off:] into the value.
 // it updates d.off to point past the decoded value.
 func (d *decodeState) value(v reflect.Value) {
 	if !v.IsValid() {
@@ -486,7 +486,7 @@ func (d *decodeState) array(v reflect.Value) {
 	u, ut, pv := d.indirect(v, false)
 	if u != nil {
 		d.off--
-		err := u.UnmarshalJSON(d.next())
+		err := u.UnmarshalPYCODEC(d.next())
 		if err != nil {
 			d.error(err)
 		}
@@ -595,7 +595,7 @@ func (d *decodeState) object(v reflect.Value) {
 	u, ut, pv := d.indirect(v, false)
 	if u != nil {
 		d.off--
-		err := u.UnmarshalJSON(d.next())
+		err := u.UnmarshalPYCODEC(d.next())
 		if err != nil {
 			d.error(err)
 		}
@@ -727,7 +727,7 @@ func (d *decodeState) object(v reflect.Value) {
 			case string:
 				d.literalStore([]byte(qv), subv, true)
 			default:
-				d.saveError(fmt.Errorf("json: invalid use of ,string struct tag, trying to unmarshal unquoted value into %v", subv.Type()))
+				d.saveError(fmt.Errorf("pycodec: invalid use of ,string struct tag, trying to unmarshal unquoted value into %v", subv.Type()))
 			}
 		} else {
 			d.value(subv)
@@ -764,7 +764,7 @@ func (d *decodeState) object(v reflect.Value) {
 					}
 					kv = reflect.ValueOf(n).Convert(kt)
 				default:
-					panic("json: Unexpected key type") // should never occur
+					panic("pycodec: Unexpected key type") // should never occur
 				}
 			}
 			v.SetMapIndex(kv, subv)
@@ -823,13 +823,13 @@ func (d *decodeState) literalStore(item []byte, v reflect.Value, fromQuoted bool
 	// Check for unmarshaler.
 	if len(item) == 0 {
 		//Empty string given
-		d.saveError(fmt.Errorf("json: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type()))
+		d.saveError(fmt.Errorf("pycodec: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type()))
 		return
 	}
 	isNull := item[0] == 'n' // null
 	u, ut, pv := d.indirect(v, isNull)
 	if u != nil {
-		err := u.UnmarshalJSON(item)
+		err := u.UnmarshalPYCODEC(item)
 		if err != nil {
 			d.error(err)
 		}
@@ -838,7 +838,7 @@ func (d *decodeState) literalStore(item []byte, v reflect.Value, fromQuoted bool
 	if ut != nil {
 		if item[0] != '"' {
 			if fromQuoted {
-				d.saveError(fmt.Errorf("json: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type()))
+				d.saveError(fmt.Errorf("pycodec: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type()))
 			} else {
 				var val string
 				switch item[0] {
@@ -856,7 +856,7 @@ func (d *decodeState) literalStore(item []byte, v reflect.Value, fromQuoted bool
 		s, ok := unquoteBytes(item)
 		if !ok {
 			if fromQuoted {
-				d.error(fmt.Errorf("json: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type()))
+				d.error(fmt.Errorf("pycodec: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type()))
 			} else {
 				d.error(errPhase)
 			}
@@ -875,7 +875,7 @@ func (d *decodeState) literalStore(item []byte, v reflect.Value, fromQuoted bool
 		// The main parser checks that only true and false can reach here,
 		// but if this was a quoted string input, it could be anything.
 		if fromQuoted && string(item) != "null" {
-			d.saveError(fmt.Errorf("json: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type()))
+			d.saveError(fmt.Errorf("pycodec: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type()))
 			break
 		}
 		switch v.Kind() {
@@ -888,13 +888,13 @@ func (d *decodeState) literalStore(item []byte, v reflect.Value, fromQuoted bool
 		// The main parser checks that only true and false can reach here,
 		// but if this was a quoted string input, it could be anything.
 		if fromQuoted && string(item) != "true" && string(item) != "false" {
-			d.saveError(fmt.Errorf("json: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type()))
+			d.saveError(fmt.Errorf("pycodec: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type()))
 			break
 		}
 		switch v.Kind() {
 		default:
 			if fromQuoted {
-				d.saveError(fmt.Errorf("json: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type()))
+				d.saveError(fmt.Errorf("pycodec: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type()))
 			} else {
 				d.saveError(&UnmarshalTypeError{Value: "bool", Type: v.Type(), Offset: int64(d.off)})
 			}
@@ -912,7 +912,7 @@ func (d *decodeState) literalStore(item []byte, v reflect.Value, fromQuoted bool
 		s, ok := unquoteBytes(item)
 		if !ok {
 			if fromQuoted {
-				d.error(fmt.Errorf("json: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type()))
+				d.error(fmt.Errorf("pycodec: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type()))
 			} else {
 				d.error(errPhase)
 			}
@@ -945,7 +945,7 @@ func (d *decodeState) literalStore(item []byte, v reflect.Value, fromQuoted bool
 	default: // number
 		if c != '-' && (c < '0' || c > '9') {
 			if fromQuoted {
-				d.error(fmt.Errorf("json: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type()))
+				d.error(fmt.Errorf("pycodec: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type()))
 			} else {
 				d.error(errPhase)
 			}
@@ -956,12 +956,12 @@ func (d *decodeState) literalStore(item []byte, v reflect.Value, fromQuoted bool
 			if v.Kind() == reflect.String && v.Type() == numberType {
 				v.SetString(s)
 				if !isValidNumber(s) {
-					d.error(fmt.Errorf("json: invalid number literal, trying to unmarshal %q into Number", item))
+					d.error(fmt.Errorf("pycodec: invalid number literal, trying to unmarshal %q into Number", item))
 				}
 				break
 			}
 			if fromQuoted {
-				d.error(fmt.Errorf("json: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type()))
+				d.error(fmt.Errorf("pycodec: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type()))
 			} else {
 				d.error(&UnmarshalTypeError{Value: "number", Type: v.Type(), Offset: int64(d.off)})
 			}
@@ -1147,7 +1147,7 @@ func getu4(s []byte) rune {
 	return rune(r)
 }
 
-// unquote converts a quoted JSON string literal s into an actual string t.
+// unquote converts a quoted PYCODEC string literal s into an actual string t.
 // The rules are different than for Go, so cannot use strconv.Unquote.
 func unquote(s []byte) (t string, ok bool) {
 	s, ok = unquoteBytes(s)
