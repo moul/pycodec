@@ -27,6 +27,10 @@ import (
 	"unicode/utf8"
 )
 
+const (
+	stringQuoteChar = '\''
+)
+
 // Marshal returns the PYCODEC encoding of v.
 //
 // Marshal traverses the value v recursively.
@@ -504,7 +508,7 @@ func addrTextMarshalerEncoder(e *encodeState, v reflect.Value, opts encOpts) {
 
 func boolEncoder(e *encodeState, v reflect.Value, opts encOpts) {
 	if opts.quoted {
-		e.WriteByte('"')
+		e.WriteByte(stringQuoteChar)
 	}
 	if v.Bool() {
 		e.WriteString("true")
@@ -512,29 +516,29 @@ func boolEncoder(e *encodeState, v reflect.Value, opts encOpts) {
 		e.WriteString("false")
 	}
 	if opts.quoted {
-		e.WriteByte('"')
+		e.WriteByte(stringQuoteChar)
 	}
 }
 
 func intEncoder(e *encodeState, v reflect.Value, opts encOpts) {
 	b := strconv.AppendInt(e.scratch[:0], v.Int(), 10)
 	if opts.quoted {
-		e.WriteByte('"')
+		e.WriteByte(stringQuoteChar)
 	}
 	e.Write(b)
 	if opts.quoted {
-		e.WriteByte('"')
+		e.WriteByte(stringQuoteChar)
 	}
 }
 
 func uintEncoder(e *encodeState, v reflect.Value, opts encOpts) {
 	b := strconv.AppendUint(e.scratch[:0], v.Uint(), 10)
 	if opts.quoted {
-		e.WriteByte('"')
+		e.WriteByte(stringQuoteChar)
 	}
 	e.Write(b)
 	if opts.quoted {
-		e.WriteByte('"')
+		e.WriteByte(stringQuoteChar)
 	}
 }
 
@@ -571,11 +575,11 @@ func (bits floatEncoder) encode(e *encodeState, v reflect.Value, opts encOpts) {
 	}
 
 	if opts.quoted {
-		e.WriteByte('"')
+		e.WriteByte(stringQuoteChar)
 	}
 	e.Write(b)
 	if opts.quoted {
-		e.WriteByte('"')
+		e.WriteByte(stringQuoteChar)
 	}
 }
 
@@ -712,7 +716,7 @@ func encodeByteSlice(e *encodeState, v reflect.Value, _ encOpts) {
 		return
 	}
 	s := v.Bytes()
-	e.WriteByte('"')
+	e.WriteByte(stringQuoteChar)
 	if len(s) < 1024 {
 		// for small buffers, using Encode directly is much faster.
 		dst := make([]byte, base64.StdEncoding.EncodedLen(len(s)))
@@ -725,7 +729,7 @@ func encodeByteSlice(e *encodeState, v reflect.Value, _ encOpts) {
 		enc.Write(s)
 		enc.Close()
 	}
-	e.WriteByte('"')
+	e.WriteByte(stringQuoteChar)
 }
 
 // sliceEncoder just wraps an arrayEncoder, checking to make sure the value isn't nil.
@@ -881,7 +885,7 @@ func (w *reflectWithString) resolve() error {
 // NOTE: keep in sync with stringBytes below.
 func (e *encodeState) string(s string, escapeHTML bool) int {
 	len0 := e.Len()
-	e.WriteByte('"')
+	e.WriteByte(stringQuoteChar)
 	start := 0
 	for i := 0; i < len(s); {
 		if b := s[i]; b < utf8.RuneSelf {
@@ -893,7 +897,7 @@ func (e *encodeState) string(s string, escapeHTML bool) int {
 				e.WriteString(s[start:i])
 			}
 			switch b {
-			case '\\', '"':
+			case '\\', stringQuoteChar:
 				e.WriteByte('\\')
 				e.WriteByte(b)
 			case '\n':
@@ -951,14 +955,14 @@ func (e *encodeState) string(s string, escapeHTML bool) int {
 	if start < len(s) {
 		e.WriteString(s[start:])
 	}
-	e.WriteByte('"')
+	e.WriteByte(stringQuoteChar)
 	return e.Len() - len0
 }
 
 // NOTE: keep in sync with string above.
 func (e *encodeState) stringBytes(s []byte, escapeHTML bool) int {
 	len0 := e.Len()
-	e.WriteByte('"')
+	e.WriteByte(stringQuoteChar)
 	start := 0
 	for i := 0; i < len(s); {
 		if b := s[i]; b < utf8.RuneSelf {
@@ -970,7 +974,7 @@ func (e *encodeState) stringBytes(s []byte, escapeHTML bool) int {
 				e.Write(s[start:i])
 			}
 			switch b {
-			case '\\', '"':
+			case '\\', stringQuoteChar:
 				e.WriteByte('\\')
 				e.WriteByte(b)
 			case '\n':
@@ -1028,7 +1032,7 @@ func (e *encodeState) stringBytes(s []byte, escapeHTML bool) int {
 	if start < len(s) {
 		e.Write(s[start:])
 	}
-	e.WriteByte('"')
+	e.WriteByte(stringQuoteChar)
 	return e.Len() - len0
 }
 
