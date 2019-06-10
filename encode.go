@@ -27,6 +27,10 @@ import (
 	"unicode/utf8"
 )
 
+const (
+	stringQuoteChar = '\''
+)
+
 // Marshal returns the PYCODEC encoding of v.
 //
 // Marshal traverses the value v recursively.
@@ -435,17 +439,17 @@ func newTypeEncoder(t reflect.Type, allowAddr bool) encoderFunc {
 }
 
 func invalidValueEncoder(e *encodeState, v reflect.Value, _ encOpts) {
-	e.WriteString("null")
+	e.WriteString("None")
 }
 
 func marshalerEncoder(e *encodeState, v reflect.Value, opts encOpts) {
 	if v.Kind() == reflect.Ptr && v.IsNil() {
-		e.WriteString("null")
+		e.WriteString("None")
 		return
 	}
 	m, ok := v.Interface().(Marshaler)
 	if !ok {
-		e.WriteString("null")
+		e.WriteString("None")
 		return
 	}
 	b, err := m.MarshalPYCODEC()
@@ -461,7 +465,7 @@ func marshalerEncoder(e *encodeState, v reflect.Value, opts encOpts) {
 func addrMarshalerEncoder(e *encodeState, v reflect.Value, _ encOpts) {
 	va := v.Addr()
 	if va.IsNil() {
-		e.WriteString("null")
+		e.WriteString("None")
 		return
 	}
 	m := va.Interface().(Marshaler)
@@ -477,7 +481,7 @@ func addrMarshalerEncoder(e *encodeState, v reflect.Value, _ encOpts) {
 
 func textMarshalerEncoder(e *encodeState, v reflect.Value, opts encOpts) {
 	if v.Kind() == reflect.Ptr && v.IsNil() {
-		e.WriteString("null")
+		e.WriteString("None")
 		return
 	}
 	m := v.Interface().(encoding.TextMarshaler)
@@ -491,7 +495,7 @@ func textMarshalerEncoder(e *encodeState, v reflect.Value, opts encOpts) {
 func addrTextMarshalerEncoder(e *encodeState, v reflect.Value, opts encOpts) {
 	va := v.Addr()
 	if va.IsNil() {
-		e.WriteString("null")
+		e.WriteString("None")
 		return
 	}
 	m := va.Interface().(encoding.TextMarshaler)
@@ -504,37 +508,37 @@ func addrTextMarshalerEncoder(e *encodeState, v reflect.Value, opts encOpts) {
 
 func boolEncoder(e *encodeState, v reflect.Value, opts encOpts) {
 	if opts.quoted {
-		e.WriteByte('"')
+		e.WriteByte(stringQuoteChar)
 	}
 	if v.Bool() {
-		e.WriteString("true")
+		e.WriteString("True")
 	} else {
-		e.WriteString("false")
+		e.WriteString("False")
 	}
 	if opts.quoted {
-		e.WriteByte('"')
+		e.WriteByte(stringQuoteChar)
 	}
 }
 
 func intEncoder(e *encodeState, v reflect.Value, opts encOpts) {
 	b := strconv.AppendInt(e.scratch[:0], v.Int(), 10)
 	if opts.quoted {
-		e.WriteByte('"')
+		e.WriteByte(stringQuoteChar)
 	}
 	e.Write(b)
 	if opts.quoted {
-		e.WriteByte('"')
+		e.WriteByte(stringQuoteChar)
 	}
 }
 
 func uintEncoder(e *encodeState, v reflect.Value, opts encOpts) {
 	b := strconv.AppendUint(e.scratch[:0], v.Uint(), 10)
 	if opts.quoted {
-		e.WriteByte('"')
+		e.WriteByte(stringQuoteChar)
 	}
 	e.Write(b)
 	if opts.quoted {
-		e.WriteByte('"')
+		e.WriteByte(stringQuoteChar)
 	}
 }
 
@@ -571,11 +575,11 @@ func (bits floatEncoder) encode(e *encodeState, v reflect.Value, opts encOpts) {
 	}
 
 	if opts.quoted {
-		e.WriteByte('"')
+		e.WriteByte(stringQuoteChar)
 	}
 	e.Write(b)
 	if opts.quoted {
-		e.WriteByte('"')
+		e.WriteByte(stringQuoteChar)
 	}
 }
 
@@ -611,7 +615,7 @@ func stringEncoder(e *encodeState, v reflect.Value, opts encOpts) {
 
 func interfaceEncoder(e *encodeState, v reflect.Value, opts encOpts) {
 	if v.IsNil() {
-		e.WriteString("null")
+		e.WriteString("None")
 		return
 	}
 	e.reflectValue(v.Elem(), opts)
@@ -665,7 +669,7 @@ type mapEncoder struct {
 
 func (me *mapEncoder) encode(e *encodeState, v reflect.Value, opts encOpts) {
 	if v.IsNil() {
-		e.WriteString("null")
+		e.WriteString("None")
 		return
 	}
 	e.WriteByte('{')
@@ -708,11 +712,11 @@ func newMapEncoder(t reflect.Type) encoderFunc {
 
 func encodeByteSlice(e *encodeState, v reflect.Value, _ encOpts) {
 	if v.IsNil() {
-		e.WriteString("null")
+		e.WriteString("None")
 		return
 	}
 	s := v.Bytes()
-	e.WriteByte('"')
+	e.WriteByte(stringQuoteChar)
 	if len(s) < 1024 {
 		// for small buffers, using Encode directly is much faster.
 		dst := make([]byte, base64.StdEncoding.EncodedLen(len(s)))
@@ -725,7 +729,7 @@ func encodeByteSlice(e *encodeState, v reflect.Value, _ encOpts) {
 		enc.Write(s)
 		enc.Close()
 	}
-	e.WriteByte('"')
+	e.WriteByte(stringQuoteChar)
 }
 
 // sliceEncoder just wraps an arrayEncoder, checking to make sure the value isn't nil.
@@ -735,7 +739,7 @@ type sliceEncoder struct {
 
 func (se *sliceEncoder) encode(e *encodeState, v reflect.Value, opts encOpts) {
 	if v.IsNil() {
-		e.WriteString("null")
+		e.WriteString("None")
 		return
 	}
 	se.arrayEnc(e, v, opts)
@@ -780,7 +784,7 @@ type ptrEncoder struct {
 
 func (pe *ptrEncoder) encode(e *encodeState, v reflect.Value, opts encOpts) {
 	if v.IsNil() {
-		e.WriteString("null")
+		e.WriteString("None")
 		return
 	}
 	pe.elemEnc(e, v.Elem(), opts)
@@ -881,7 +885,7 @@ func (w *reflectWithString) resolve() error {
 // NOTE: keep in sync with stringBytes below.
 func (e *encodeState) string(s string, escapeHTML bool) int {
 	len0 := e.Len()
-	e.WriteByte('"')
+	e.WriteByte(stringQuoteChar)
 	start := 0
 	for i := 0; i < len(s); {
 		if b := s[i]; b < utf8.RuneSelf {
@@ -893,7 +897,7 @@ func (e *encodeState) string(s string, escapeHTML bool) int {
 				e.WriteString(s[start:i])
 			}
 			switch b {
-			case '\\', '"':
+			case '\\', stringQuoteChar:
 				e.WriteByte('\\')
 				e.WriteByte(b)
 			case '\n':
@@ -951,14 +955,14 @@ func (e *encodeState) string(s string, escapeHTML bool) int {
 	if start < len(s) {
 		e.WriteString(s[start:])
 	}
-	e.WriteByte('"')
+	e.WriteByte(stringQuoteChar)
 	return e.Len() - len0
 }
 
 // NOTE: keep in sync with string above.
 func (e *encodeState) stringBytes(s []byte, escapeHTML bool) int {
 	len0 := e.Len()
-	e.WriteByte('"')
+	e.WriteByte(stringQuoteChar)
 	start := 0
 	for i := 0; i < len(s); {
 		if b := s[i]; b < utf8.RuneSelf {
@@ -970,7 +974,7 @@ func (e *encodeState) stringBytes(s []byte, escapeHTML bool) int {
 				e.Write(s[start:i])
 			}
 			switch b {
-			case '\\', '"':
+			case '\\', stringQuoteChar:
 				e.WriteByte('\\')
 				e.WriteByte(b)
 			case '\n':
@@ -1028,7 +1032,7 @@ func (e *encodeState) stringBytes(s []byte, escapeHTML bool) int {
 	if start < len(s) {
 		e.Write(s[start:])
 	}
-	e.WriteByte('"')
+	e.WriteByte(stringQuoteChar)
 	return e.Len() - len0
 }
 
